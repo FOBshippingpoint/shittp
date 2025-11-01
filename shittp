@@ -1,10 +1,6 @@
 #!/bin/sh
 
-: ${XDG_CONFIG_HOME:=$HOME/.config}
-
-# SHITTP_MKTEMP=mktemp
-# SHITTP_CP=cp
-# SHITTP_BASE64=base64
+SHITTP_CONFIG_DIR="${XDG_CONFIG_HOME:=$HOME/.local/config}/shittp"
 
 cleanup() {
   [ -d "$tar_tmpdir" ] && rm -rf "$tar_tmpdir"
@@ -22,36 +18,44 @@ die() {
   exit "${2:-1}"
 }
 
-trap cleanup INT EXIT
+trap cleanup EXIT
 
-if [ ! -d "$XDG_CONFIG_HOME/shittp" ]; then
-  die "Configuration directory [ $XDG_CONFIG_HOME/shittp ] is required"
+if [ ! -d "$SHITTP_CONFIG_DIR" ]; then
+  die "Configuration directory [ $SHITTP_CONFIG_DIR ] is required"
 fi
 
 tar_tmpdir=$(mktemp --directory)
-cp -R "$XDG_CONFIG_HOME/shittp" "$tar_tmpdir"
+cp -R "$SHITTP_CONFIG_DIR" "$tar_tmpdir"
 
 cat <<'EOF' >"$tar_tmpdir/shittp/__shittp_setup"
-export VIMINIT="source $SHITTP_HOME/.vimrc"
 trap 'rm -rf "$SHITTP_HOME"' EXIT
+
+if [ -e "$SHITTP_HOME/.vimrc" ]; then
+  export VIMINIT="source $SHITTP_HOME/.vimrc"
+fi
+
 case $SHELL in
-  *bash*) bash --init-file "$SHITTP_HOME/.bashrc" ;;
+  *bash*)
+    if [ -e "$SHITTP_HOME/.bashrc" ]; then
+      bash --init-file "$SHITTP_HOME/.bashrc"
+    else
+      bash -i
+    fi
+  ;;
   *) sh -i ;;
 esac
 EOF
 
-archive_build_script=$(cd "$tar_tmpdir/shittp" && tar czf - . | base64 | awk '
+archive_build_script=$(tar czf - -C "$tar_tmpdir/shittp" . | base64 | awk '
 BEGIN { print "archive=" }
 { print "archive=\"${archive}" $0 "\\n\"" }
 ')
 
 remote_command="$archive_build_script"'
 tmpdir=$(mktemp --directory)
-(cd "$tmpdir" && printf "$archive" | base64 --decode | tar zxf - .)
+printf "$archive" | base64 --decode | tar zxf - -C "$tmpdir"
 export SHITTP_HOME=$tmpdir
 . "$SHITTP_HOME/__shittp_setup"
 '
-
-msg "$remote_command"
 
 ssh -t -o RemoteCommand="$remote_command" "$@"
