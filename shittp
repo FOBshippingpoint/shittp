@@ -1,6 +1,8 @@
 #!/bin/sh
 
-SHITTP_CONFIG_DIR="${XDG_CONFIG_HOME:=$HOME/.local/config}/shittp"
+if [ -z "$SHITTP_CONFIG_DIR" ]; then
+  SHITTP_CONFIG_DIR="${XDG_CONFIG_HOME:=$HOME/.local/config}/shittp"
+fi
 
 cleanup() {
   [ -d "$tar_tmpdir" ] && rm -rf "$tar_tmpdir"
