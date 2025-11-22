@@ -1,12 +1,14 @@
 #!/bin/sh
 
-if [ -z "$SHITTP_CONFIG_DIR" ]; then
-  SHITTP_CONFIG_DIR="${XDG_CONFIG_HOME:=$HOME/.local/config}/shittp"
-fi
+set -eu
+
+: ${SHITTP_CONFIG_DIR:="${XDG_CONFIG_HOME:-$HOME/.config}/shittp"}
 
 cleanup() {
-  [ -d "$tar_tmpdir" ] && rm -rf "$tar_tmpdir"
+  [ "${tar_tmpdir:-}" ] && rm -rf "$tar_tmpdir"
 }
+
+trap cleanup EXIT
 
 msg() {
   IFS=" $IFS"
@@ -16,37 +18,119 @@ msg() {
 }
 
 die() {
-  msg "$1"
+  [ "${1:-}" ] && msg "$1"
   exit "${2:-1}"
 }
 
-trap cleanup EXIT
+require() {
+  while [ $# -gt 0 ]; do
+    hash "$1" 2>/dev/null || {
+      msg "Dependency [ $1 ] is required";
+      failed=1
+    }
+    shift
+  done
+  [ "${failed:-}" ] && return 1 || return 0
+}
+
+usage() {
+  cat <<'USAGE'
+shittp - dotfiles carrier for SSH
+
+Usage: shittp [options]... [ssh_options]... destination
+
+Options:
+  -h, --help               You're looking at it
+
+Examples:
+  shittp john@192.168.78.66  # SSH login to 192.168.78.66 with your dotfiles
+
+USAGE
+exit 0
+}
+
+arg_build_script='set -- '
+while [ $# -gt 0 ]; do
+  consumed=0
+  case $1 in
+    -h | --help)
+      usage
+    ;;
+    where)
+      echo "$SHITTP_CONFIG_DIR"
+      exit 0
+    ;;
+    -o)
+      case $2 in 
+        RemoteCommand=*)
+          consumed=1
+          USER_REMOTE_COMMAND=${2#RemoteCommand=}
+          shift # -o
+          shift # RemoteCommand=XXX
+        ;;
+        RemoteCommand*)
+          USER_REMOTE_COMMAND=$3
+          consumed=1
+          shift # -o
+          shift # RemoteCommand
+          shift # XXX
+        ;;
+      esac
+    ;;
+    -oRemoteCommand)
+      consumed=1
+      USER_REMOTE_COMMAND=$2
+      shift # -oRemoteCommand
+      shift # XXX
+    ;;
+    -oRemoteCommand=*)
+      consumed=1
+      USER_REMOTE_COMMAND=${1#RemoteCommand=}
+      shift # -oRemoteCommand=XXX
+    ;;
+    *)
+    ;;
+  esac
+  if [ "$consumed" = 0 ]; then
+    arg_build_script="$arg_build_script '$1'"
+    shift
+  fi
+done
+eval "$arg_build_script"
+
+require mktemp awk tar base64
 
 if [ ! -d "$SHITTP_CONFIG_DIR" ]; then
-  die "Configuration directory [ $SHITTP_CONFIG_DIR ] is required"
+  die "Config [ $SHITTP_CONFIG_DIR ] is required"
 fi
 
 tar_tmpdir=$(mktemp --directory)
-cp -R "$SHITTP_CONFIG_DIR" "$tar_tmpdir"
+cp -r "$SHITTP_CONFIG_DIR" "$tar_tmpdir"
 
-cat <<'EOF' >"$tar_tmpdir/shittp/__shittp_setup"
+# Create the script with here-document so we don't need to figure out how to escape quotes
+setup_script=$(cat <<'SETUP'
 trap 'rm -rf "$SHITTP_HOME"' EXIT
 
-if [ -e "$SHITTP_HOME/.vimrc" ]; then
-  export VIMINIT="source $SHITTP_HOME/.vimrc"
-fi
+export SHITTP="$SHITTP_HOME/shittp_init.sh"
+>>"$SHITTP" # ensure exists
 
 case $SHELL in
   *bash*)
-    if [ -e "$SHITTP_HOME/.bashrc" ]; then
-      bash --init-file "$SHITTP_HOME/.bashrc"
-    else
-      bash -i
-    fi
+    echo '. "$SHITTP_HOME/shittp_init.sh"' >>"$SHITTP_HOME/.bashrc"
+    bash --init-file "$SHITTP_HOME/.bashrc"
   ;;
-  *) sh -i ;;
+  *zsh*)
+    echo '. "$SHITTP_HOME/shittp_init.sh"' >>"$SHITTP_HOME/.zshrc"
+    export ZDOTDIR=$SHITTP_HOME
+    zsh -i
+  ;;
+  *) 
+    echo '[shittp] Run [ . "$SHITTP" ] to setup'
+    ${SHELL:-/bin/sh} -i
+  ;;
 esac
-EOF
+SETUP
+)
 
 archive_build_script=$(tar czf - -C "$tar_tmpdir/shittp" . | base64 | awk '
 BEGIN { print "archive=" }
@@ -57,7 +141,9 @@ remote_command="$archive_build_script"'
 tmpdir=$(mktemp --directory)
 printf "$archive" | base64 --decode | tar zxf - -C "$tmpdir"
 export SHITTP_HOME=$tmpdir
-. "$SHITTP_HOME/__shittp_setup"
-'
+# shittp_setup
+'"$setup_script"'
+# user remote command
+'"${USER_REMOTE_COMMAND:-}"
 
 ssh -t -o RemoteCommand="$remote_command" "$@"
