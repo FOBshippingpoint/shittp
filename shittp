@@ -37,13 +37,19 @@ usage() {
   cat <<'USAGE'
 shittp - dotfiles carrier for SSH
 
-Usage: shittp [options]... [ssh_options]... destination
+Usage: shittp [options]... [command] [ssh_options]... destination
 
 Options:
-  -h, --help               You're looking at it
+  -h, --help           You're looking at it
+  --config-dir DIR     Specify shittp config directory [default: ~/.config/shittp]
+
+Commands:
+  where                Show default shittp config directory
 
 Examples:
   shittp john@192.168.78.66  # SSH login to 192.168.78.66 with your dotfiles
+  shittp where               # Prints shittp config directory (i.e. ~/.config/shittp)
+  
 
 USAGE
 exit 0
@@ -59,6 +65,13 @@ while [ $# -gt 0 ]; do
     where)
       echo "$SHITTP_CONFIG_DIR"
       exit 0
+    ;;
+    --config-dir)
+      consumed=1
+      [ "${2:-}" ] || die "SHITTP_CONFIG_DIR of option [ $1 ] not specified"
+      SHITTP_CONFIG_DIR=$(cd "$2" && pwd -P)
+      shift # --config
+      shift # SHITTP_CONFIG_DIR
     ;;
     -o)
       case $2 in 
@@ -92,7 +105,7 @@ if [ ! -d "$SHITTP_CONFIG_DIR" ]; then
 fi
 
 tar_tmpdir=$(mktemp --directory)
-cp -r "$SHITTP_CONFIG_DIR" "$tar_tmpdir"
+cp -r "$SHITTP_CONFIG_DIR" "$tar_tmpdir/shittp"
 
 # Create the script with here-document so we don't need to figure out how to escape quotes
 setup_script=$(cat <<'SETUP'
