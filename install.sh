@@ -69,7 +69,7 @@ Usage: install.sh [options]...
 
 Options:
   -b, --bin BIN            Specify bin directory            [default: ~/.local/bin]
-  -c, --config-dir DIR     Specify default config directory [default: ~/.local/config]
+  -c, --config-dir DIR     Specify default config directory [default: ~/.config]
   --from github|here       Specify installation source      [default: github]
                            - github: download zip from GitHub main branch
                            - here:   install from the script directory, assume that you had clone the repository
@@ -86,7 +86,7 @@ USAGE
 
 : ${SHITTP_SRC:=github}
 : ${SHITTP_BIN_DIR:="$HOME/.local/bin"}
-: ${SHITTP_CONFIG_DIR:="${XDG_CONFIG_HOME:-$HOME/.local/config}"}
+: ${SHITTP_CONFIG_DIR:="${XDG_CONFIG_HOME:-$HOME/.config}"}
 YES=0
 
 while [ $# -gt 0 ]; do
