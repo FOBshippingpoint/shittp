@@ -98,7 +98,7 @@ while [ $# -gt 0 ]; do
 done
 eval "$arg_build_script"
 
-require mktemp awk tar base64
+require mktemp tar base64
 
 if [ ! -d "$SHITTP_CONFIG_DIR" ]; then
   die "Config [ $SHITTP_CONFIG_DIR ] is required"
@@ -132,10 +132,14 @@ esac
 SETUP
 )
 
-archive_build_script=$(tar czf - -C "$tar_tmpdir/shittp" . | base64 | awk '
-BEGIN { print "archive=" }
-{ print "archive=\"${archive}" $0 "\\n\"" }
-')
+archive_build_script=$(
+  printf '%s\n' "archive="
+  tar czf - -C "$tar_tmpdir/shittp" . |
+    base64 |
+    while IFS= read -r line; do
+      printf 'archive="${archive}%s\\n"\n' "$line"
+    done
+)
 
 remote_command="$archive_build_script"'
 tmpdir=$(mktemp --directory)
