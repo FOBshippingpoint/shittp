@@ -23,7 +23,7 @@ chmod +x install.sh
 1. Edit your dotfiles in `~/.local/config/shittp`
     ```sh
     cd ~/.local/config/shittp
-    printf '%s' 'hi_from_local_bashrc() { echo hello }' >> .bashrc
+    echo 'hi_from_local_bashrc() { echo hello; }' >> .bashrc
     $EDITOR .vimrc
     $EDITOR .tmux.conf
     ```
@@ -31,7 +31,7 @@ chmod +x install.sh
 2. Login to remote host
     ```sh
     shittp john@other.machine
-    john> hi_from_local_bashrc              # output: hello
-    john> vim                               # injected via VIMINIT environment variable
-    john> tmux -f "$SHITTP_HOME/.tmux.conf"
+    john> hi_from_local_bashrc  # output: hello
+    john> vim                   # from alias vim="vim -u $SHITTP_HOME/.vimrc"
+    john> tmux                  # from alias tmux="tmux -f $SHITTP_HOME/.tmux.conf"
     ```
