@@ -62,30 +62,17 @@ while [ $# -gt 0 ]; do
     ;;
     -o)
       case $2 in 
-        RemoteCommand=*)
+        [Rr]emote[Cc]ommand=*)
           consumed=1
-          USER_REMOTE_COMMAND=${2#RemoteCommand=}
+          USER_REMOTE_COMMAND=${2#[Rr]emote[Cc]ommand=}
           shift # -o
           shift # RemoteCommand=XXX
         ;;
-        RemoteCommand*)
-          USER_REMOTE_COMMAND=$3
-          consumed=1
-          shift # -o
-          shift # RemoteCommand
-          shift # XXX
-        ;;
       esac
     ;;
-    -oRemoteCommand)
+    -o[Rr]emote[Cc]ommand=*)
       consumed=1
-      USER_REMOTE_COMMAND=$2
-      shift # -oRemoteCommand
-      shift # XXX
-    ;;
-    -oRemoteCommand=*)
-      consumed=1
-      USER_REMOTE_COMMAND=${1#RemoteCommand=}
+      USER_REMOTE_COMMAND=${1#[Rr]emote[Cc]ommand=}
       shift # -oRemoteCommand=XXX
     ;;
     *)
