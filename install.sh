@@ -28,7 +28,7 @@ require() {
     }
     shift
   done
-  [ "${failed:-}" ] && return 1
+  [ "${failed:-}" ] && return 1 || return 0
 }
 
 confirm() {
