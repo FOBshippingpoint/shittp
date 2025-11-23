@@ -40,21 +40,27 @@ shittp - dotfiles carrier for SSH
 Usage: shittp [options]... [command] [ssh_options]... destination
 
 Options:
-  -h, --help           You're looking at it
-  --config-dir DIR     Specify shittp config directory [default: ~/.config/shittp]
+  -h, --help            You're looking at it
+  --config-dir DIR      Specify shittp config directory [default: ~/.config/shittp]
 
 Commands:
-  where                Show default shittp config directory
+  where                 Show default shittp config directory
+  print                 Print the command instead of run as SSH remote command
+                        Useful when you want to run in different environment like Docker
 
 Examples:
   shittp john@192.168.78.66  # SSH login to 192.168.78.66 with your dotfiles
   shittp where               # Prints shittp config directory (i.e. ~/.config/shittp)
-  
-
+  sudo docker run -it alpine /bin/sh -c "$(shittp print)"
+                             # Start sh in alpine with your dotfiles
 USAGE
 exit 0
 }
 
+# Show help if didn't provide any arguments
+[ $# -eq 0 ] && usage
+
+print_only=0
 arg_build_script='set -- '
 while [ $# -gt 0 ]; do
   consumed=0
@@ -65,6 +71,11 @@ while [ $# -gt 0 ]; do
     where)
       echo "$SHITTP_CONFIG_DIR"
       exit 0
+    ;;
+    print)
+      consumed=1
+      print_only=1
+      shift
     ;;
     --config-dir)
       consumed=1
@@ -77,7 +88,7 @@ while [ $# -gt 0 ]; do
       case $2 in 
         [Rr]emote[Cc]ommand=*)
           consumed=1
-          USER_REMOTE_COMMAND=${2#[Rr]emote[Cc]ommand=}
+          extra_command=${2#[Rr]emote[Cc]ommand=}
           shift # -o
           shift # RemoteCommand=XXX
         ;;
@@ -85,7 +96,7 @@ while [ $# -gt 0 ]; do
     ;;
     -o[Rr]emote[Cc]ommand=*)
       consumed=1
-      USER_REMOTE_COMMAND=${1#[Rr]emote[Cc]ommand=}
+      extra_command=${1#[Rr]emote[Cc]ommand=}
       shift # -oRemoteCommand=XXX
     ;;
     *)
@@ -112,20 +123,21 @@ setup_script=$(cat <<'SETUP'
 trap 'rm -rf "$SHITTP_HOME"' EXIT
 
 export SHITTP="$SHITTP_HOME/shittp_init.sh"
->>"$SHITTP" # ensure exists
+echo "echo '[shittp] Inited'" >>"$SHITTP" # ensure exists
 
 case $SHELL in
   *bash*)
-    echo '. "$SHITTP_HOME/shittp_init.sh"' >>"$SHITTP_HOME/.bashrc"
+    echo '. "$SHITTP"' >>"$SHITTP_HOME/.bashrc"
     bash --init-file "$SHITTP_HOME/.bashrc"
   ;;
   *zsh*)
-    echo '. "$SHITTP_HOME/shittp_init.sh"' >>"$SHITTP_HOME/.zshrc"
+    echo '. "$SHITTP"' >>"$SHITTP_HOME/.zshrc"
     export ZDOTDIR=$SHITTP_HOME
     zsh -i
   ;;
   *) 
-    echo '[shittp] Run [ . "$SHITTP" ] to setup'
+    echo '[shittp] Run this to initialize:'
+    echo '. "$SHITTP"'
     ${SHELL:-/bin/sh} -i
   ;;
 esac
@@ -143,11 +155,16 @@ archive_build_script=$(
 
 remote_command="$archive_build_script"'
 tmpdir=$(mktemp --directory)
-printf "$archive" | base64 --decode | tar zxf - -C "$tmpdir"
+printf "$archive" | base64 -d | tar zxf - -C "$tmpdir"
 export SHITTP_HOME=$tmpdir
 # shittp_setup
 '"$setup_script"'
-# user remote command
-'"${USER_REMOTE_COMMAND:-}"
+# extra command
+'"${extra_command:-}"
 
-ssh -t -o RemoteCommand="$remote_command" "$@"
+if [ "$print_only" = 1 ]; then
+  msg "$remote_command"
+else
+  ssh -t -o RemoteCommand="$remote_command" "$@"
+fi
+
