@@ -168,17 +168,18 @@ if [ -e "$SHITTP_BIN_DIR/shittp" ]; then
     die 'Cancelled'
   fi
 else
-  cp "$src/shittp" "$SHITTP_BIN_DIR" || die "Failed to copy bin to [ $SHITTP_BIN_DIR ]"
+  mkdir -p "$SHITTP_BIN_DIR" && cp "$src/shittp" "$SHITTP_BIN_DIR" ||
+    die "Failed to create bin directory [ $SHITTP_BIN_DIR ]"
 fi
 
 if [ -d "$SHITTP_CONFIG_DIR/shittp" ]; then
   if [ "$YES" = 1 ] || confirm "Config [ $SHITTP_CONFIG_DIR/shittp ] already exists, overwrite? [y/N]"; then
-    rm -rf "$SHITTP_CONFIG_DIR/shittp" || die "Failed to overwrite config to [ $SHITTP_CONFIG_DIR/shittp ]"
-    cp -rf "$src/config" "$SHITTP_CONFIG_DIR/shittp" || die "Failed to overwrite config to [ $SHITTP_CONFIG_DIR/shittp ]"
+    rm -rf "$SHITTP_CONFIG_DIR/shittp" && cp -r "$src/config" "$SHITTP_CONFIG_DIR/shittp" ||
+      die "Failed to overwrite config to [ $SHITTP_CONFIG_DIR/shittp ]"
   fi
 else
-  mkdir -p "$SHITTP_CONFIG_DIR" || die "Failed to create config directory [ $SHITTP_CONFIG_DIR ]"
-  cp -rf "$src/config" "$SHITTP_CONFIG_DIR/shittp" || die "Failed to move config to [ $SHITTP_CONFIG_DIR/shittp ]"
+  mkdir -p "$SHITTP_CONFIG_DIR" && cp -r "$src/config" "$SHITTP_CONFIG_DIR/shittp" ||
+    die "Failed to create config to [ $SHITTP_CONFIG_DIR/shittp ]"
 fi
 
 echo 'Installation complete :)'
