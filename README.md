@@ -20,9 +20,9 @@ chmod +x install.sh
 
 ## Usage
 
-1. Edit your dotfiles in `~/.local/config/shittp`
+1. Edit your dotfiles in `~/.config/shittp`
     ```sh
-    cd ~/.local/config/shittp
+    cd ~/.config/shittp
     echo 'hi_from_local_bashrc() { echo hello; }' >> .bashrc
     $EDITOR .vimrc
     $EDITOR .tmux.conf
