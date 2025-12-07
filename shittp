@@ -5,10 +5,11 @@ set -eu
 : ${SHITTP_CONFIG_DIR:="${XDG_CONFIG_HOME:-$HOME/.config}/shittp"}
 
 cleanup() {
-  [ "${tar_tmpdir:-}" ] && rm -rf "$tar_tmpdir"
+  [ "${tar_tmpdir:-}" ] && rm -r "$tar_tmpdir"
 }
 
-trap cleanup EXIT
+# Do not trap any signal when running shellspec test
+[ "${__SOURCED__:-}" ] || trap cleanup EXIT
 
 msg() {
   IFS=" $IFS"
@@ -23,14 +24,15 @@ die() {
 }
 
 require() {
+  _status=0
   while [ $# -gt 0 ]; do
-    hash "$1" 2>/dev/null || {
+    type "$1" >/dev/null 2>&1 || {
       msg "Dependency [ $1 ] is required";
-      failed=1
+      _status=1
     }
     shift
   done
-  [ "${failed:-}" ] && return 1 || return 0
+  return "$_status"
 }
 
 usage() {
@@ -57,57 +59,85 @@ USAGE
 exit 0
 }
 
-# Show help if didn't provide any arguments
+cmd_where=0
+cmd_print_only=0
+parse_args() {
+  while [ $# -gt 0 ]; do
+    _consumed=0
+    case $1 in
+      -h | --help)
+        usage
+      ;;
+      where)
+        cmd_where=1
+        return
+      ;;
+      print)
+        _consumed=1
+        cmd_print_only=1
+        shift
+      ;;
+      --config-dir)
+        _consumed=1
+        [ "${2:-}" ] || die "SHITTP_CONFIG_DIR of option [ $1 ] not specified"
+        SHITTP_CONFIG_DIR=$(cd "$2" && pwd -P)
+        shift # --config
+        shift # SHITTP_CONFIG_DIR
+      ;;
+      -o)
+        case $2 in 
+          [Rr]emote[Cc]ommand=*)
+            _consumed=1
+            extra_command=${2#[Rr]emote[Cc]ommand=}
+            shift # -o
+            shift # RemoteCommand=XXX
+          ;;
+        esac
+      ;;
+      -o[Rr]emote[Cc]ommand=*)
+        _consumed=1
+        extra_command=${1#[Rr]emote[Cc]ommand=}
+        shift # -oRemoteCommand=XXX
+      ;;
+      *)
+      ;;
+    esac
+    if [ "$_consumed" = 0 ]; then
+      if [ "${rest_args:-}" ]; then
+        rest_args="$rest_args
+$1"
+      else
+        rest_args="$1"
+      fi
+      shift
+    fi
+  done
+}
+
+dir_to_b64() {
+  tar czf - -C "$1" . |
+    base64 |
+    while IFS= read -r line; do
+      printf '%s' "$line"
+    done
+}
+
+# Early return for shellspec testing
+${__SOURCED__:+return}
+
+# Show help if no arguments provided
 [ $# -eq 0 ] && usage
 
-print_only=0
-arg_build_script='set -- '
-while [ $# -gt 0 ]; do
-  consumed=0
-  case $1 in
-    -h | --help)
-      usage
-    ;;
-    where)
-      echo "$SHITTP_CONFIG_DIR"
-      exit 0
-    ;;
-    print)
-      consumed=1
-      print_only=1
-      shift
-    ;;
-    --config-dir)
-      consumed=1
-      [ "${2:-}" ] || die "SHITTP_CONFIG_DIR of option [ $1 ] not specified"
-      SHITTP_CONFIG_DIR=$(cd "$2" && pwd -P)
-      shift # --config
-      shift # SHITTP_CONFIG_DIR
-    ;;
-    -o)
-      case $2 in 
-        [Rr]emote[Cc]ommand=*)
-          consumed=1
-          extra_command=${2#[Rr]emote[Cc]ommand=}
-          shift # -o
-          shift # RemoteCommand=XXX
-        ;;
-      esac
-    ;;
-    -o[Rr]emote[Cc]ommand=*)
-      consumed=1
-      extra_command=${1#[Rr]emote[Cc]ommand=}
-      shift # -oRemoteCommand=XXX
-    ;;
-    *)
-    ;;
-  esac
-  if [ "$consumed" = 0 ]; then
-    arg_build_script="$arg_build_script '$1'"
-    shift
-  fi
-done
-eval "$arg_build_script"
+parse_args "$@"
+set --
+while IFS= read -r line; do
+  set -- "$@" "$line"
+done <<< "$rest_args" # Bug: pass multi-line as single arg will incorrectly parsed as several args
+
+if [ "$cmd_where" = 1 ]; then
+  echo "$SHITTP_CONFIG_DIR"
+  exit 0
+fi
 
 require mktemp tar base64
 
@@ -144,16 +174,7 @@ esac
 SETUP
 )
 
-archive_build_script=$(
-  printf '%s\n' "archive="
-  tar czf - -C "$tar_tmpdir/shittp" . |
-    base64 |
-    while IFS= read -r line; do
-      printf 'archive="${archive}%s\\n"\n' "$line"
-    done
-)
-
-remote_command="$archive_build_script"'
+remote_command='archive="'"$(dir_to_b64 "$tar_tmpdir/shittp")"'"''
 tmpdir=$(mktemp --directory)
 printf "$archive" | base64 -d | tar zxf - -C "$tmpdir"
 export SHITTP_HOME=$tmpdir
@@ -162,7 +183,7 @@ export SHITTP_HOME=$tmpdir
 # extra command
 '"${extra_command:-}"
 
-if [ "$print_only" = 1 ]; then
+if [ "$cmd_print_only" = 1 ]; then
   msg "$remote_command"
 else
   ssh -t -o RemoteCommand="$remote_command" "$@"
