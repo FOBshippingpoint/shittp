@@ -1,12 +1,16 @@
+<div align="center">
+<img alt="shittp logo" src="https://raw.githubusercontent.com/FOBshippingpoint/shittp/2db5ed4609b565fd8b3158b8e934064432f9347e/logo.svg"></img>
+</div>
+
 # shittp
 
-Bring your dotfiles to remote machine via SSH.
+Bring your dotfiles to a remote machine via SSH.
 
 ## How It Works
 
-shittp use `tar` to create gzipped tar archive of your dotfiles, and convert the archive to base64 format (i.e., readable characters), pass base64 string as remote command on the other machine via SSH. Finally, decode base64 string and use `tar` to extract back to the dotfiles.
+shittp uses `tar` to create gzipped tar archive of your dotfiles, converts the archive to base64 format (i.e., readable characters), and passes base64 string as a remote command on the other machine via SSH. Finally, it decodes base64 string and uses `tar` to restore the dotfiles.
 
-The original idea comes from [kyrat](https://github.com/fsquillace/kyrat), which use `gzip`/`gunzip` instead of `tar` and is written in bash. 
+The original idea comes from [kyrat](https://github.com/fsquillace/kyrat), which uses `gzip`/`gunzip` instead of `tar` and is written in bash. 
 
 ## Installation
 
@@ -23,7 +27,7 @@ chmod +x install.sh
 1. Edit your dotfiles in `~/.config/shittp`
     ```sh
     cd ~/.config/shittp
-    echo 'hi_from_local_bashrc() { echo hello; }' >> .bashrc
+    echo 'aloha() { echo hello; }' >> ~/.bashrc
     $EDITOR .vimrc
     $EDITOR .tmux.conf
     ```
@@ -31,7 +35,8 @@ chmod +x install.sh
 2. Login to remote host
     ```sh
     shittp john@other.machine
-    john> hi_from_local_bashrc  # output: hello
-    john> vim                   # from alias vim="vim -u $SHITTP_HOME/.vimrc"
-    john> tmux                  # from alias tmux="tmux -f $SHITTP_HOME/.tmux.conf"
+    john> aloha  # output: hello
+    john> vim    # an alias equivalent to "vim -u $SHITTP_HOME/.vimrc"
+    john> tmux   # an alias equivalent to "tmux -f $SHITTP_HOME/.tmux.conf"
     ```
+
