@@ -132,7 +132,7 @@ parse_args "$@"
 set --
 while IFS= read -r line; do
   set -- "$@" "$line"
-done <<< "$rest_args" # Bug: pass multi-line as single arg will incorrectly parsed as several args
+done <<< "${rest_args:-}" # Bug: pass multi-line as single arg will incorrectly parsed as several args
 
 if [ "$cmd_where" = 1 ]; then
   echo "$SHITTP_CONFIG_DIR"
