@@ -23,6 +23,16 @@ die() {
   exit "${2:-1}"
 }
 
+# Genius quoting function by Koichi Nakashima
+# Under License: Creative Commons Zero v1.0 Universal
+# Source: https://github.com/ko1nksm/getoptions/blob/master/lib/getoptions_base.sh
+quote() {
+  q="$2'" r=""
+  while [ "$q" ]; do r="$r${q%%\'*}'\''" && q=${q#*\'}; done
+  q="'${r%????}'" && q=${q#\'\'} && q=${q%\'\'}
+  eval "$1=\${q:-\"''\"}"
+}
+
 require() {
   _status=0
   while [ $# -gt 0 ]; do
@@ -62,6 +72,7 @@ exit 0
 cmd_where=0
 cmd_print_only=0
 parse_args() {
+  set_stat='set -- '
   while [ $# -gt 0 ]; do
     _consumed=0
     case $1 in
@@ -103,15 +114,12 @@ parse_args() {
       ;;
     esac
     if [ "$_consumed" = 0 ]; then
-      if [ "${rest_args:-}" ]; then
-        rest_args="$rest_args
-$1"
-      else
-        rest_args="$1"
-      fi
+      quote 'quoted' "$1"
+      set_stat="$set_stat $quoted"
       shift
     fi
   done
+  eval "$set_stat"
 }
 
 dir_to_b64() {
@@ -129,10 +137,6 @@ ${__SOURCED__:+return}
 [ $# -eq 0 ] && usage
 
 parse_args "$@"
-set --
-while IFS= read -r line; do
-  set -- "$@" "$line"
-done <<< "${rest_args:-}" # Bug: pass multi-line as single arg will incorrectly parsed as several args
 
 if [ "$cmd_where" = 1 ]; then
   echo "$SHITTP_CONFIG_DIR"
