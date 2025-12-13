@@ -1,5 +1,5 @@
 <div align="center">
-<img alt="shittp logo" src="https://raw.githubusercontent.com/FOBshippingpoint/shittp/2db5ed4609b565fd8b3158b8e934064432f9347e/logo.svg"></img>
+<img alt="shittp logo" src="https://raw.githubusercontent.com/FOBshippingpoint/shittp/refs/heads/main/logo.svg"></img>
 </div>
 
 # shittp
