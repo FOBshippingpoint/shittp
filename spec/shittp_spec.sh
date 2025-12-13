@@ -138,9 +138,16 @@ End
 
 Describe "dir_to_b64()"
 
-  It "convert directory to Base64 string"
+  It "convert directory to gzipped Base64 string"
     When call dir_to_b64 "$SHELLSPEC_HELPERDIR/sample_dir"
-    The output should equal 'H4sIAAAAAAAAA+3UQQrCMBCF4Vl7ipygzTRNc56kTVdCoer9bQVBBe0qFvH/NgNJYAYek6qW4uwieL9WDd4+1jtRr+qbYF1wy3lw1onx5UcTuZzOcTZG+v748d3W/Y+q6nGaCvdYA+7a9n3+2jznr8tZI8YWnuvmz/Pv45hNiikf9p4Ee6jqFOfCPbb3X1///9Cx/18x5DiknEfWHwAAAAAAAAAAAACA33UFGBsVOQAoAAA='
+    expected='H4sIAAAAAAAAA+3UQQrCMBCF4Vl7ipygzTRNc56kTVdCoer9bQVBBe0qFvH/NgNJYAYek6qW4uwieL9WDd4+1jtRr+qbYF1wy3lw1onx5UcTuZzOcTZG+v748d3W/Y+q6nGaCvdYA+7a9n3+2jznr8tZI8YWnuvmz/Pv45hNiikf9p4Ee6jqFOfCPbb3X1///9Cx/18x5DiknEfWHwAAAAAAAAAAAACA33UFGBsVOQAoAAA='
+    The output should equal "$expected"
+    tmpdir=$(mktemp -d)
+    base64 -d <<EOF | tar zxf - -C "$tmpdir"
+$expected
+EOF
+    The contents of file "$tmpdir/foo" should equal "$(cat "$SHELLSPEC_HELPERDIR/sample_dir/foo")"
+    The contents of file "$tmpdir/bar" should equal "$(cat "$SHELLSPEC_HELPERDIR/sample_dir/bar")"
   End
 
 End

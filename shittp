@@ -149,7 +149,7 @@ if [ ! -d "$SHITTP_CONFIG_DIR" ]; then
   die "Config [ $SHITTP_CONFIG_DIR ] is required"
 fi
 
-tar_tmpdir=$(mktemp --directory)
+tar_tmpdir=$(mktemp -d)
 cp -r "$SHITTP_CONFIG_DIR" "$tar_tmpdir/shittp"
 
 # Create the script with here-document so we don't need to figure out how to escape quotes
@@ -159,7 +159,7 @@ trap 'rm -rf "$SHITTP_HOME"' EXIT
 export SHITTP="$SHITTP_HOME/shittp_init.sh"
 echo "echo '[shittp] Inited'" >>"$SHITTP" # ensure exists
 
-case $SHELL in
+case $SHITTP_SHELL in
   *bash*)
     echo '. "$SHITTP"' >>"$SHITTP_HOME/.bashrc"
     bash --init-file "$SHITTP_HOME/.bashrc"
@@ -172,16 +172,19 @@ case $SHELL in
   *) 
     echo '[shittp] Run this to initialize:'
     echo '. "$SHITTP"'
-    ${SHELL:-/bin/sh} -i
+    "${SHELL:-/bin/sh}" -i
   ;;
 esac
 SETUP
 )
 
 remote_command='archive="'"$(dir_to_b64 "$tar_tmpdir/shittp")"'"''
-tmpdir=$(mktemp --directory)
-printf "$archive" | base64 -d | tar zxf - -C "$tmpdir"
+tmpdir=$(mktemp -d)
+base64 -d <<EOF | tar zxf - -C "$tmpdir"
+$archive
+EOF
 export SHITTP_HOME=$tmpdir
+'"export SHITTP_SHELL=${SHITTP_SHELL:-}"'
 # shittp_setup
 '"$setup_script"'
 # extra command
@@ -190,6 +193,6 @@ export SHITTP_HOME=$tmpdir
 if [ "$cmd_print_only" = 1 ]; then
   msg "$remote_command"
 else
-  ssh -t -o RemoteCommand="$remote_command" "$@"
+  ssh -t "$@" "$remote_command"
 fi
 
