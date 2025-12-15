@@ -53,16 +53,16 @@ Usage: shittp [options]... [command] [ssh_options]... destination
 
 Options:
   -h, --help            You're looking at it
-  --config-dir DIR      Specify shittp config directory [default: ~/.config/shittp]
+  --config-dir DIR      Specify config directory [default: ~/.config/shittp]
 
 Commands:
   where                 Show default shittp config directory
   print                 Print the command instead of run as SSH remote command
-                        Useful when you want to run in different environment like Docker
+                        Useful for loading dotfiles in environment like Docker
 
 Examples:
   shittp john@192.168.78.66  # SSH login to 192.168.78.66 with your dotfiles
-  shittp where               # Prints shittp config directory (i.e. ~/.config/shittp)
+  shittp where               # Prints config directory (i.e. ~/.config/shittp)
   sudo docker run -it alpine /bin/sh -c "$(shittp print)"
                              # Start sh in alpine with your dotfiles
 USAGE
