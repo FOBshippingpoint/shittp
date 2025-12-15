@@ -5,7 +5,8 @@ set -eu
 : ${SHITTP_CONFIG_DIR:="${XDG_CONFIG_HOME:-$HOME/.config}/shittp"}
 
 cleanup() {
-  [ "${tar_tmpdir:-}" ] && rm -r "$tar_tmpdir"
+  [ "${tar_tmpdir:-}" ] || return 0
+  rm -r "$tar_tmpdir"
 }
 
 # Do not trap any signal when running shellspec test
@@ -178,10 +179,9 @@ esac
 SETUP
 )
 
-remote_command='archive="'"$(dir_to_b64 "$tar_tmpdir/shittp")"'"''
-tmpdir=$(mktemp -d)
+remote_command='tmpdir=$(mktemp -d)
 base64 -d <<EOF | tar zxf - -C "$tmpdir"
-$archive
+'"$(dir_to_b64 "$tar_tmpdir/shittp")"'
 EOF
 export SHITTP_HOME=$tmpdir
 '"export SHITTP_SHELL=${SHITTP_SHELL:-}"'
