@@ -4,7 +4,6 @@ Describe "msg()"
 
   It "print new line when no message is given"
     When call msg
-
     The output should equal ''
   End
 
@@ -148,6 +147,37 @@ $expected
 EOF
     The contents of file "$tmpdir/foo" should equal "$(cat "$SHELLSPEC_HELPERDIR/sample_dir/foo")"
     The contents of file "$tmpdir/bar" should equal "$(cat "$SHELLSPEC_HELPERDIR/sample_dir/bar")"
+  End
+
+End
+
+Describe "detect_ssh_client_type()"
+
+  Context "when SSH client is given"
+    ssh()         { echo 'openssh usage text'  >&2; }
+    dbclient()    { echo 'dropbear usage text' >&2; }
+    unsupported() { echo 'unknown'             >&2; }
+
+    Describe
+      Parameters
+        'ssh'                  'openssh'
+        'dbclient'             'dropbear'
+        'unsupported'          'unknown'
+        'non_existing_command' 'unknown'
+      End
+
+      It "print SSH client type"
+        When call detect_ssh_client_type "$1"
+        The output should equal "$2"
+      End
+    End
+  End
+
+  It "detect alias ssh=dbclient by usage text"
+    ssh() { echo 'dropbear usage text' >&2; }
+
+    When call detect_ssh_client_type 'ssh'
+    The output should equal 'dropbear'
   End
 
 End

@@ -49,7 +49,7 @@ require() {
 }
 
 usage() {
-  cat <<'USAGE'
+  >&2 cat <<'USAGE'
 shittp - dotfiles carrier for SSH
 
 Usage: shittp [options]... [command] [ssh_options]... destination
@@ -142,6 +142,19 @@ dir_to_b64() {
     done
 }
 
+detect_ssh_client_type() {
+  _client=$1
+  case $("$_client" 2>&1 ||:) in
+    *dropbear*) client_type=dbclient ;;
+    *)          client_type=''       ;;
+  esac
+  case ${client_type:-$_client} in
+    *ssh*)      printf 'openssh'  ;;
+    *dbclient*) printf 'dropbear' ;;
+    *)          printf 'unknown'  ;;
+  esac
+}
+
 # Early return for shellspec testing
 ${__SOURCED__:+return}
 
@@ -207,16 +220,15 @@ if [ "$cmd_print_only" = 1 ]; then
   exit 0
 fi
 
-case $("$SHITTP_SSH_CLIENT" >/dev/null 2>&1 ||:) in
-  *dropbear*) client_type=dbclient ;;
-  *) ;;
-esac
-
-case ${client_type:-$SHITTP_SSH_CLIENT} in
-  *ssh*)
+case $(detect_ssh_client_type "$SHITTP_SSH_CLIENT") in
+  openssh)
     "$SHITTP_SSH_CLIENT" -t -oRemoteCommand="$remote_command" "$@"
   ;;
-  *dbclient*)
+  dropbear)
     "$SHITTP_SSH_CLIENT" -t "$@" "$remote_command"
   ;;
+  unknown)
+    die "Sorry, shittp doesn't support for SSH client [ $SHITTP_SSH_CLIENT ]"
+  ;;
 esac
+
