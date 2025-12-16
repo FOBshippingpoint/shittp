@@ -25,12 +25,18 @@ for_line() {
   done
 }
 
+check_ignore() {
+  case $1 in \#*) return 0;; *) return 1;; esac
+}
+
 build_image() {
+  check_ignore "$1" && return
   docker build --tag "${1%%.Dockerfile}:latest" --file "spec/integration/dockerfiles/$1" .
 }
 
 report=''
 run_spec() {
+  check_ignore "$1" && return
   docker run --rm "$1" "$2"
   excode=$?
   if [ "$excode" -eq 0 ]; then
@@ -45,6 +51,7 @@ while IFS= read -r line; do
   build_image "$line"
 done <<EOF 
 shittp-test-base.Dockerfile
+shittp-test-dropbear.Dockerfile
 shittp-test-bash.Dockerfile
 shittp-test-vim.Dockerfile
 EOF
@@ -56,6 +63,7 @@ done <<EOF
 shittp-test-base:latest  spec/basic_spec.tcl
 shittp-test-bash:latest  spec/bash_spec.tcl
 shittp-test-vim:latest   spec/vim_spec.tcl
+shittp-test-dropbear:latest   spec/dropbear_spec.tcl
 EOF
 
 echo

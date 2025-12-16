@@ -1,8 +1,10 @@
 #!/bin/sh
+# vim: set expandtab tabstop=2 softtabstop=2 shiftwidth=2 :
 
 set -eu
 
 : ${SHITTP_CONFIG_DIR:="${XDG_CONFIG_HOME:-$HOME/.config}/shittp"}
+: ${SHITTP_SSH_CLIENT:=ssh}
 
 cleanup() {
   [ "${tar_tmpdir:-}" ] || return 0
@@ -55,6 +57,8 @@ Usage: shittp [options]... [command] [ssh_options]... destination
 Options:
   -h, --help            You're looking at it
   --config-dir DIR      Specify config directory [default: ~/.config/shittp]
+  --ssh-client CLIENT   Specify SSH client command (e.g., dbclient)
+                        [default: ssh]
 
 Commands:
   where                 Show default shittp config directory
@@ -66,14 +70,16 @@ Examples:
   shittp where               # Prints config directory (i.e. ~/.config/shittp)
   sudo docker run -it alpine /bin/sh -c "$(shittp print)"
                              # Start sh in alpine with your dotfiles
+  shittp --ssh-client dbclient john@example.com
+                             # Connect with Dropbear SSH client
 USAGE
 exit 0
 }
 
 cmd_where=0
 cmd_print_only=0
+set_args_stat='set --'
 parse_args() {
-  set_stat='set -- '
   while [ $# -gt 0 ]; do
     _consumed=0
     case $1 in
@@ -96,6 +102,12 @@ parse_args() {
         shift # --config
         shift # SHITTP_CONFIG_DIR
       ;;
+      --ssh-client)
+        _consumed=1
+        SHITTP_SSH_CLIENT=$2
+        shift # --ssh-client
+        shift # SHITTP_SSH_CLIENT
+      ;;
       -o)
         case $2 in 
           [Rr]emote[Cc]ommand=*)
@@ -116,11 +128,10 @@ parse_args() {
     esac
     if [ "$_consumed" = 0 ]; then
       quote 'quoted' "$1"
-      set_stat="$set_stat $quoted"
+      set_args_stat="$set_args_stat $quoted"
       shift
     fi
   done
-  eval "$set_stat"
 }
 
 dir_to_b64() {
@@ -138,6 +149,7 @@ ${__SOURCED__:+return}
 [ $# -eq 0 ] && usage
 
 parse_args "$@"
+eval "$set_args_stat"
 
 if [ "$cmd_where" = 1 ]; then
   echo "$SHITTP_CONFIG_DIR"
@@ -160,7 +172,7 @@ trap 'rm -rf "$SHITTP_HOME"' EXIT
 export SHITTP="$SHITTP_HOME/shittp_init.sh"
 echo "echo '[shittp] Inited'" >>"$SHITTP" # ensure exists
 
-case $SHITTP_SHELL in
+case ${SHITTP_SHELL:-$SHELL} in
   *bash*)
     echo '. "$SHITTP"' >>"$SHITTP_HOME/.bashrc"
     bash --init-file "$SHITTP_HOME/.bashrc"
@@ -192,7 +204,19 @@ export SHITTP_HOME=$tmpdir
 
 if [ "$cmd_print_only" = 1 ]; then
   msg "$remote_command"
-else
-  ssh -t "$@" "$remote_command"
+  exit 0
 fi
 
+case $("$SHITTP_SSH_CLIENT" >/dev/null 2>&1 ||:) in
+  *dropbear*) client_type=dbclient ;;
+  *) ;;
+esac
+
+case ${client_type:-$SHITTP_SSH_CLIENT} in
+  *ssh*)
+    "$SHITTP_SSH_CLIENT" -t -oRemoteCommand="$remote_command" "$@"
+  ;;
+  *dbclient*)
+    "$SHITTP_SSH_CLIENT" -t "$@" "$remote_command"
+  ;;
+esac
