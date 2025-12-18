@@ -36,10 +36,6 @@ chmod +x install.sh
     Or Docker container:
     ```sh
     docker run -it alpine /bin/sh -c "$(shittp print)"
-    # [shittp] Run this to initialize:
-    # . "$SHITTP"
-    $ . "$SHITTP"
-    # [shittp] Inited
     $ aloha    # output: hello
     ```
 

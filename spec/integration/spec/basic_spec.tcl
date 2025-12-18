@@ -3,8 +3,11 @@
 source [file join [file dirname [info script]] ssh_login.tcl]
 
 ssh_login
-expect -ex {[shittp] Run this to initialize:}
-
-send {. "$SHITTP"}
-send "\r"
-expect -ex {[shittp] Inited} ;# -ex = exact
+expect {
+  -ex {[shittp] Inited} {
+    exit 0
+  }
+  timeout {
+    exit 1
+  }
+}

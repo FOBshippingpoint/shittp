@@ -196,9 +196,9 @@ case ${SHITTP_SHELL:-$SHELL} in
     zsh -i
   ;;
   *) 
-    echo '[shittp] Run this to initialize:'
-    echo '. "$SHITTP"'
-    "${SHELL:-/bin/sh}" -i
+    # echo '[shittp] Run this to initialize:'
+    # echo '. "$SHITTP"'
+    ENV=$SHITTP "${SHELL:-/bin/sh}" -i
   ;;
 esac
 SETUP
