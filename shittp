@@ -180,7 +180,7 @@ cp -r "$SHITTP_CONFIG_DIR" "$tar_tmpdir/shittp"
 
 # Create the script with here-document so we don't need to figure out how to escape quotes
 setup_script=$(cat <<'SETUP'
-trap 'rm -rf "$SHITTP_HOME"' EXIT
+trap 'rm -r "$SHITTP_HOME"' EXIT
 
 export SHITTP="$SHITTP_HOME/shittp_init.sh"
 echo "echo '[shittp] Inited'" >>"$SHITTP" # ensure exists
