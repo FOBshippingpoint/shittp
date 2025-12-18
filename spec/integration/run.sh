@@ -19,12 +19,6 @@ redln() {
   red "$1"; echo
 }
 
-for_line() {
-  while IFS= read -r line; do
-    eval "$1 $line"
-  done
-}
-
 check_ignore() {
   case $1 in \#*) return 0;; *) return 1;; esac
 }
@@ -60,9 +54,9 @@ EOF
 while IFS= read -r line; do
   run_spec $line
 done <<EOF 
-shittp-test-base:latest  spec/basic_spec.tcl
-shittp-test-bash:latest  spec/bash_spec.tcl
-shittp-test-vim:latest   spec/vim_spec.tcl
+shittp-test-base:latest       spec/basic_spec.tcl
+shittp-test-bash:latest       spec/bash_spec.tcl
+shittp-test-vim:latest        spec/vim_spec.tcl
 shittp-test-dropbear:latest   spec/dropbear_spec.tcl
 EOF
 
