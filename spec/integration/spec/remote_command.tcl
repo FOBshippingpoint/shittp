@@ -2,15 +2,9 @@
 
 source [file join [file dirname [info script]] ssh_login.tcl]
 
-ssh_login
-expect {
-  -ex {[shittp] Inited} { }
-  timeout {
-    exit 1
-  }
-}
+set keyfile {"$HOME/.ssh/id_ed25519"}
+send "shittp -o 'StrictHostKeyChecking no' -i $keyfile -oRemoteCommand='test_profile' localhost\r"
 
-send "test_profile\r"
 expect {
   ".profile ready" {
     exit 0

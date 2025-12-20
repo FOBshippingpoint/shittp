@@ -2,17 +2,11 @@
 
 source [file join [file dirname [info script]] ssh_login.tcl]
 
+exec head -c 100k /dev/urandom > $::env(SHITTP_CONFIG_DIR)/large_file
+
 ssh_login
 expect {
-  -ex {[shittp] Inited} { }
-  timeout {
-    exit 1
-  }
-}
-
-send "test_profile\r"
-expect {
-  ".profile ready" {
+  -ex {Argument list too long} {
     exit 0
   }
   timeout {

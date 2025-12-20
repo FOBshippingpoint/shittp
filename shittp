@@ -52,12 +52,12 @@ usage() {
   >&2 cat <<'USAGE'
 shittp - dotfiles carrier for SSH
 
-Usage: shittp [options]... [command] [ssh_options]... destination
+Usage: shittp [options]... [command] [ssh_options]... destination [-- ssh_command]
 
 Options:
   -h, --help            You're looking at it
   --config-dir DIR      Specify config directory [default: ~/.config/shittp]
-  --ssh-client CLIENT   Specify SSH client command (e.g., dbclient)
+  --client CLIENT       Specify SSH client command (e.g., dbclient)
                         [default: ssh]
 
 Commands:
@@ -67,11 +67,34 @@ Commands:
 
 Examples:
   shittp john@192.168.78.66  # SSH login to 192.168.78.66 with your dotfiles
-  shittp where               # Prints config directory (i.e. ~/.config/shittp)
-  sudo docker run -it alpine /bin/sh -c "$(shittp print)"
+  shittp john@example.com -- restart_tomcat
+                             # Execute command with dotfiles defined function
+  docker run -it alpine /bin/sh -c "$(shittp print)"
                              # Start sh in alpine with your dotfiles
-  shittp --ssh-client dbclient john@example.com
+  shittp where               # Prints config directory (i.e. ~/.config/shittp)
+  shittp --client dbclient john@example.com
                              # Connect with Dropbear SSH client
+
+Environment Variables:
+  Annotation:
+    [default: ?]        The variable have a default value
+    @remote             The variable will populate on the remote
+
+  SHITTP_CONFIG_DIR     Directory that your dotfiles live
+                        [default: ~/.config/shittp]
+  SHITTP_SHELL          Shell path you would like to use on the remote
+                        @remote [default: your login shell such as /bin/sh ]
+  SHITTP_SSH_CLIENT     SSH client path you want to use, will be override
+                        by --client option
+                        [default: ssh]
+  SHITTP                Path to shittp_init.sh. Source it if didn't see
+                        "[shittp] Inited" message after login
+                        @remote
+  SHITTP_HOME           Which directory you want to extract dotfiles tarball to
+                        @remote [default: a temp directory]
+  SHITTP_INITED         value is 1 if shittp initialized
+                        @remote
+
 USAGE
 exit 0
 }
@@ -102,10 +125,10 @@ parse_args() {
         shift # --config
         shift # SHITTP_CONFIG_DIR
       ;;
-      --ssh-client)
+      --client)
         _consumed=1
         SHITTP_SSH_CLIENT=$2
-        shift # --ssh-client
+        shift # --client
         shift # SHITTP_SSH_CLIENT
       ;;
       -o)
@@ -120,8 +143,15 @@ parse_args() {
       ;;
       -o[Rr]emote[Cc]ommand=*)
         _consumed=1
-        extra_command=${1#[Rr]emote[Cc]ommand=}
+        extra_command=${1#-o[Rr]emote[Cc]ommand=}
         shift # -oRemoteCommand=XXX
+      ;;
+      --)
+        shift # --
+        IFS=" $IFS"
+        extra_command="${*:-}"
+        IFS=${IFS#?}
+        break
       ;;
       *)
       ;;
@@ -178,42 +208,50 @@ fi
 tar_tmpdir=$(mktemp -d)
 cp -r "$SHITTP_CONFIG_DIR" "$tar_tmpdir/shittp"
 
+if [ "${extra_command:-}" ]; then
+  printf '%s' "$extra_command; exit" >"$tar_tmpdir/shittp/_shittp_extra_command.sh"
+fi
+
+printf '%s' '
+export SHITTP_INITED=1
+if [ -r "$SHITTP_HOME/_shittp_extra_command.sh" ]; then
+  . "$SHITTP_HOME/_shittp_extra_command.sh"
+else
+  echo "[shittp] Inited"
+fi
+' >>"$tar_tmpdir/shittp/shittp_init.sh" # ensure exists
+
 # Create the script with here-document so we don't need to figure out how to escape quotes
 setup_script=$(cat <<'SETUP'
 trap 'rm -r "$SHITTP_HOME"' EXIT
 
 export SHITTP="$SHITTP_HOME/shittp_init.sh"
-echo "echo '[shittp] Inited'" >>"$SHITTP" # ensure exists
 
 case ${SHITTP_SHELL:-$SHELL} in
   *bash*)
-    echo '. "$SHITTP"' >>"$SHITTP_HOME/.bashrc"
+    echo '[ "${SHITTP_INITED:-}" ] || . "$SHITTP"' >>"$SHITTP_HOME/.bashrc"
     bash --init-file "$SHITTP_HOME/.bashrc"
   ;;
   *zsh*)
-    echo '. "$SHITTP"' >>"$SHITTP_HOME/.zshrc"
+    echo '[ "${SHITTP_INITED:-}" ] || . "$SHITTP"' >>"$SHITTP_HOME/.zshrc"
     export ZDOTDIR=$SHITTP_HOME
     zsh -i
   ;;
   *) 
-    # echo '[shittp] Run this to initialize:'
-    # echo '. "$SHITTP"'
     ENV=$SHITTP "${SHELL:-/bin/sh}" -i
   ;;
 esac
 SETUP
 )
 
-remote_command='tmpdir=$(mktemp -d)
-base64 -d <<EOF | tar zxf - -C "$tmpdir"
+remote_command='SHITTP_HOME="'"${SHITTP_HOME:-}"'"
+[ "${SHITTP_HOME:-}" ] || SHITTP_HOME=$(mktemp -d)
+base64 -d <<EOF | tar zxf - -C "$SHITTP_HOME"
 '"$(dir_to_b64 "$tar_tmpdir/shittp")"'
 EOF
-export SHITTP_HOME=$tmpdir
+export SHITTP_HOME
 '"export SHITTP_SHELL=${SHITTP_SHELL:-}"'
-# shittp_setup
-'"$setup_script"'
-# extra command
-'"${extra_command:-}"
+'"$setup_script"
 
 if [ "$cmd_print_only" = 1 ]; then
   msg "$remote_command"
@@ -231,4 +269,3 @@ case $(detect_ssh_client_type "$SHITTP_SSH_CLIENT") in
     die "Sorry, shittp doesn't support for SSH client [ $SHITTP_SSH_CLIENT ]"
   ;;
 esac
-

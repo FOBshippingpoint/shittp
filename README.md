@@ -30,8 +30,8 @@ chmod +x install.sh
     ```sh
     shittp john@other.machine
     john$ aloha  # output: hello
-    john$ vim    # an alias equivalent to "vim -u $SHITTP_HOME/.vimrc"
-    john$ tmux   # an alias equivalent to "tmux -f $SHITTP_HOME/.tmux.conf"
+    john$ vim    # alias equal to "vim -u $SHITTP_HOME/.vimrc"
+    john$ tmux   # alias equal to "tmux -f $SHITTP_HOME/.tmux.conf"
     ```
     Or Docker container:
     ```sh
@@ -41,6 +41,24 @@ chmod +x install.sh
 
 ## How It Works
 
-shittp uses `tar` to create gzipped tar archive of your dotfiles, converts the archive to base64 format (i.e., [printable characters](https://datatracker.ietf.org/doc/html/rfc4648)), and passes base64 string as a remote command on the other machine via SSH. Finally, it decodes base64 string and uses `tar` to restore the dotfiles. Everything is contained in a temp directory, shittp won't override any dotfiles on the remote environment.
+1.  **Pack:** create a tarball of your dotfiles and pipes to base64 string.
+2.  **Transport:** passing the base64 string and setup script as a SSH remote command.
+3.  **Unpack:** on the remote, decodes base64 string and extracts to temp directory.
+4.  **Init:** sources setup script and start an interactive shell.
+5.  **Cleanup:** remove temp directory once disconnect.
 
-The original idea comes from [kyrat](https://github.com/fsquillace/kyrat), which uses `gzip`/`gunzip` instead of `tar` and is written in bash. 
+The original idea comes from [kyrat](https://github.com/fsquillace/kyrat), which uses `gzip`/`gunzip` and `bash`. shittp uses tar and POSIX shell.
+
+## Development
+
+### Testing
+
+Required dependencies: shellspec, docker
+
+```sh
+# Unit test
+shellspec
+
+# Integration test
+sudo spec/integration/run.sh
+```

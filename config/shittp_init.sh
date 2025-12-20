@@ -6,7 +6,10 @@
 tmux_conf="$SHITTP_HOME/.tmux.conf"
 vimrc="$SHITTP_HOME/.vimrc"
 inputrc="$SHITTP_HOME/.inputrc"
+profile="$SHITTP_HOME/.profile"
 overwrite_aliases=0
+
+[ -r "$profile" ] && . "$profile"
 
 is_alias_exists() {
   alias "$1" >/dev/null 2>&1

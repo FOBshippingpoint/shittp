@@ -55,6 +55,8 @@ while IFS= read -r line; do
   run_spec $line
 done <<EOF 
 shittp-test-base:latest       spec/basic_spec.tcl
+shittp-test-base:latest       spec/remote_command.tcl
+shittp-test-base:latest       spec/large_file.tcl
 shittp-test-bash:latest       spec/bash_spec.tcl
 shittp-test-vim:latest        spec/vim_spec.tcl
 shittp-test-dropbear:latest   spec/dropbear_spec.tcl

@@ -6,7 +6,7 @@ spawn /bin/sh
 set keyfile {"$HOME/.ssh/id_dropbear"}
 
 # -y -y to bypass host key checking
-send "shittp --ssh-client dbclient -i $keyfile -y -y localhost\r"
+send "shittp --client dbclient -i $keyfile -y -y localhost\r"
 expect {
   -ex {[shittp] Inited} {
     exit 0
