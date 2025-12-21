@@ -72,7 +72,7 @@ Options:
   -b, --bin BIN            Specify bin directory            [default: ~/.local/bin]
   -c, --config-dir DIR     Specify default config directory [default: ~/.config]
   --from github|here       Specify installation source      [default: github]
-                           - github: download zip from GitHub main branch
+                           - github: download tarball from GitHub release
                            - here:   install from the script directory, assume that you had clone the repository
   -y, --yes                Automatic yes to prompts
   -h, --help               You're looking at it
@@ -153,13 +153,12 @@ if [ "$SHITTP_SRC" = here ]; then
   echo 'Install from script directory...'
   src=$script_dir
 else
-  require curl unzip mktemp
-  tmpdir=$(mktemp --directory || die "Cannot create temp directory")
+  require curl tar mktemp
+  tmpdir=$(mktemp -d || die "Cannot create temp directory")
   cd "$tmpdir"
   echo 'Downloading from GitHub...'
-  curl -fsSL https://github.com/FOBshippingpoint/shittp/archive/refs/heads/main.zip --output shittp.zip
-  unzip shittp.zip
-  src=shittp-main # The unzipped directory is 'shitp-main'
+  curl -fsSL https://github.com/FOBshippingpoint/shittp/releases/latest/download/shittp.tar.gz | tar xzf - -C .
+  src='.'
 fi
 
 if [ -e "$SHITTP_BIN_DIR/shittp" ]; then

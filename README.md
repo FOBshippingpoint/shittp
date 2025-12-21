@@ -21,7 +21,7 @@ chmod +x install.sh
 1. Edit your dotfiles in `~/.config/shittp`
     ```sh
     cd ~/.config/shittp 
-    echo 'aloha() { echo hello; }' >> .bashrc
+    echo 'aloha() { echo hello; }' >> .profile
     $EDITOR .vimrc
     $EDITOR .tmux.conf
     ```
