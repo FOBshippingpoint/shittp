@@ -6,6 +6,8 @@
 
 > Bring your dotfiles to a remote machine via SSH without mess.
 
+[![asciicast](https://asciinema.org/a/Pt8MvdHHmvzQPpitz8xWEA0jg.svg)](https://asciinema.org/a/Pt8MvdHHmvzQPpitz8xWEA0jg)
+
 ## Installation
 
 Required dependencies: **POSIX shell**, **ssh**, **tar**, **base64**, **mktemp**
