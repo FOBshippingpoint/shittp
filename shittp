@@ -3,8 +3,8 @@
 
 set -eu
 
-: ${SHITTP_CONFIG_DIR:="${XDG_CONFIG_HOME:-$HOME/.config}/shittp"}
-: ${SHITTP_SSH_CLIENT:=ssh}
+: "${SHITTP_CONFIG_DIR:="${XDG_CONFIG_HOME:-$HOME/.config}/shittp"}"
+: "${SHITTP_SSH_CLIENT:=ssh}"
 
 cleanup() {
   [ "${tar_tmpdir:-}" ] || return 0
@@ -18,6 +18,7 @@ msg() {
   IFS=" $IFS"
   set -- '%s\n' "${*:-}"
   IFS=${IFS#?}
+  # shellcheck disable=SC2059
   printf "$@"
 }
 
@@ -158,7 +159,7 @@ parse_args() {
     esac
     if [ "$_consumed" = 0 ]; then
       quote 'quoted' "$1"
-      set_args_stat="$set_args_stat $quoted"
+      set_args_stat="$set_args_stat ${quoted:-}"
       shift
     fi
   done
@@ -212,6 +213,7 @@ if [ "${extra_command:-}" ]; then
   printf '%s' "$extra_command; exit" >"$tar_tmpdir/shittp/_shittp_extra_command.sh"
 fi
 
+# shellcheck disable=SC2016
 printf '%s' '
 export SHITTP_INITED=1
 if [ -r "$SHITTP_HOME/_shittp_extra_command.sh" ]; then
@@ -244,6 +246,7 @@ esac
 SETUP
 )
 
+# shellcheck disable=SC2016
 remote_command='SHITTP_HOME="'"${SHITTP_HOME:-}"'"
 [ "${SHITTP_HOME:-}" ] || SHITTP_HOME=$(mktemp -d)
 base64 -d <<EOF | tar zxf - -C "$SHITTP_HOME"
