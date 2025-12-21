@@ -51,6 +51,78 @@ chmod +x install.sh
 
 The original idea comes from [kyrat](https://github.com/fsquillace/kyrat), which uses `gzip`/`gunzip` and `bash`. shittp uses tar and POSIX shell.
 
+## Help Information
+
+```bash
+shittp [options]... [command] [ssh_options]... destination [-- ssh_command]
+```
+
+### Options
+
+| Option | Description | Default |
+| --- | --- | --- |
+| `-h`, `--help` | Show help message. |  |
+| `--config-dir DIR` | Specify config directory. | `~/.config/shittp` |
+| `--client CLIENT` | Specify SSH client command (e.g., `dbclient`). | `ssh` |
+| `-v`, `--version` | Print shittp version. |  |
+
+### Commands
+
+| Command | Description |
+| --- | --- |
+| `where` | Show the default config directory path. |
+| `print` | Output the command string instead of running SSH. Useful for loading dotfiles in environments like Docker. |
+
+### Examples
+
+Basic SSH Login
+
+```bash
+shittp john@example.com
+```
+
+Pass SSH options as is
+
+```bash
+shittp -oStrictHostKeyChecking=no john@example.com
+```
+
+Execute Remote Function
+
+```bash
+shittp john@example.com -- foo bar
+shittp -oRemoteCommand='foo bar' john@example.com
+```
+
+Docker Integration
+
+```bash
+docker run -it alpine /bin/sh -c "$(shittp print)"
+```
+
+Dropbear Client
+
+```bash
+shittp --client dbclient john@example.com
+```
+
+### Environment Variables
+
+| Variable | Scope | Description | Default |
+| --- | --- | --- | --- |
+| `SHITTP_CONFIG_DIR` | Local | Directory where your dotfiles live. | `~/.config/shittp` |
+| `SHITTP_SSH_CLIENT` | Local | SSH client path (overridden by `--client`). | `ssh` |
+| `SHITTP_SHELL` | Local/Remote | Shell path to use on the remote. | Remote login shell |
+| `SHITTP_HOME` | Local/Remote | Directory to extract dotfiles tarball into. | Created temp directory |
+| `SHITTP` | Remote | Path to `shittp_init.sh`. Source this if `[shittp] Inited` does not appear. |  |
+| `SHITTP_INITED` | Remote | Set to `1` if shittp initialized successfully. |  |
+
+### Limitations
+
+Large cofig may fail to load due to the OS maximum argument length constraint (`ARG_MAX`). It is known that 100K file will trigger the error on Alpine Linux.
+
+Command like `tar czf - | ssh host tar xzf -` should work, however this requires 2-stage SSH connection which means user need to type passphrase twice.
+
 ## Development
 
 Required dependencies: shellcheck, shellspec, docker
