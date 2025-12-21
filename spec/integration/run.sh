@@ -78,7 +78,9 @@ echo
 
 if [ "${failed:-}" = 1 ]; then
   redln "Integration test failed :("
+  exit 1
 else
   greenln "Integration test passed :)"
+  exit 0
 fi
 echo
