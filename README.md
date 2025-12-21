@@ -31,7 +31,7 @@ chmod +x install.sh
     shittp john@other.machine
     john$ aloha  # output: hello
     john$ vim    # alias equal to "vim -u $SHITTP_HOME/.vimrc"
-    john$ tmux   # alias equal to "tmux -f $SHITTP_HOME/.tmux.conf"
+    john$ tmux   # alias equal to "tmux -L shittp -f $SHITTP_HOME/.tmux.conf"
     ```
     Or Docker container:
     ```sh
@@ -51,14 +51,19 @@ The original idea comes from [kyrat](https://github.com/fsquillace/kyrat), which
 
 ## Development
 
-### Testing
+Required dependencies: shellcheck, shellspec, docker
 
-Required dependencies: shellspec, docker
+### Makefile
 
-```sh
-# Unit test
-shellspec
+```text
+Specify a command. The choices are:
 
-# Integration test
-sudo spec/integration/run.sh
+  help                 Show this help
+  lint                 Run shellcheck
+  unit                 Run unit test with shellspec
+  integration          Run integration test script
+  webdev               Start web server for home page
+  build                Run all check (lint, unit, integration) and build tarball
+  clean                Remove shittp tarball from the build step
+
 ```

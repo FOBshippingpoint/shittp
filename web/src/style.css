@@ -1,0 +1,194 @@
+html {
+	font-family: "IBM Plex Sans JP", sans-serif;
+	font-optical-sizing: auto;
+	font-weight: 400;
+	font-style: normal;
+	font-variation-settings: "wdth" 100;
+}
+
+code {
+	font-family: "IBM Plex Mono", monospace;
+	font-weight: 400;
+	font-style: normal;
+  font-size: 0.9em;
+}
+
+/*
+			Josh's Custom CSS Reset
+			https://www.joshwcomeau.com/css/custom-css-reset/
+		*/
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+* {
+	margin: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	html {
+		interpolate-size: allow-keywords;
+	}
+}
+
+body {
+	line-height: calc(1em + 0.5rem);
+	-webkit-font-smoothing: antialiased;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+	display: block;
+	max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+	font: inherit;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	overflow-wrap: break-word;
+}
+
+p {
+	text-wrap: pretty;
+	margin-bottom: 1.25em;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	text-wrap: balance;
+}
+
+html,
+body {
+	height: 100%;
+}
+
+body {
+	display: flex;
+	flex-direction: column;
+}
+
+main {
+	display: grid;
+	grid-template-columns: 1fr min(42rem, 100%) 1fr;
+	grid-auto-rows: min-content;
+	padding-inline: 16px;
+	flex: 1;
+	padding-bottom: 2em;
+
+	:last-child {
+		align-self: stretch;
+	}
+}
+
+pre {
+	padding-inline: 1em;
+	padding-block: 0.8em;
+	white-space: pre;
+	overflow: auto;
+	border-radius: 6px;
+	border: 1px solid color-mix(in srgb, gray 12%, transparent);
+}
+
+pre code {
+	font-size: inherit;
+	display: block;
+	font-size: 0.8em;
+}
+
+a.nostyle {
+	text-decoration: none;
+	color: inherit;
+}
+
+a.external::after {
+	content: "🡵";
+	display: inline-block;
+	vertical-align: super;
+	font-size: 75%;
+	line-height: 1em;
+}
+
+main > * {
+	grid-column: 2;
+}
+
+header {
+	padding-block: 1rem;
+	display: flex;
+	align-items: center;
+	nav {
+		margin-left: auto;
+	}
+}
+
+.header-bin,
+.footer-bin {
+	display: grid;
+	grid-template-columns: 1fr min(42rem, 100%) 1fr;
+	padding-inline: 16px;
+	& > * {
+		grid-column: 2;
+	}
+}
+
+.bi-github {
+	color: black;
+}
+
+.header-bin {
+	border-bottom: 1px solid gainsboro;
+}
+
+.footer-bin {
+	padding-block: 1em;
+	border-top: 1px solid gainsboro;
+}
+
+.logo-bin {
+	display: grid;
+	place-content: center;
+	margin-block: 0.5em 1em;
+}
+
+h2 {
+	margin-block: 1.5em 0.5em;
+}
+
+h3 {
+	margin-block: 1.5em 0.5em;
+	font-weight: 500;
+}
+
+todo {
+	color: red;
+}
+
+.usage {
+	.steps {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
+}

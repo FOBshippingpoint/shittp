@@ -17,7 +17,7 @@ is_alias_exists() {
 
 if [ -e "$tmux_conf" ]; then
   if ! is_alias_exists tmux || [ "$overwrite_aliases" = 1 ]; then
-    alias tmux="tmux -f $tmux_conf"
+    alias tmux="tmux -L shittp -f $tmux_conf"
   fi
 fi
 

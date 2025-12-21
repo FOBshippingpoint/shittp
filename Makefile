@@ -25,6 +25,10 @@ unit: ## Run unit test with shellspec
 integration: ## Run integration test script
 	spec/integration/run.sh
 
+.PHONY: webdev
+webdev: ## Start web server for home page
+	cd web && bun run dev
+
 build: lint unit integration ## Run all check (lint, unit, integration) and build tarball
 	tar czvf shittp.tar.gz shittp config
 
