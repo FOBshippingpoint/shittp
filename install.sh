@@ -3,7 +3,8 @@
 set -eu
 
 cleanup() {
-  [ "${tmpdir:-}" ] && rm -rf "$tmpdir"
+  [ "${tmpdir:-}" ] || return 0
+  rm -r "$tmpdir"
 }
 
 trap cleanup EXIT
