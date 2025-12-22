@@ -4,7 +4,10 @@
 
 # shittp
 
-> Bring your dotfiles to a remote machine via SSH without mess.
+Bring your dotfiles to a remote machine via SSH without mess.
+
+> [!NOTE]
+> **SHITT-P** is pronounced like sheet-p (*[/ɕitːopiː/](https://ipa-reader.com/?text=%C9%95it%CB%90opi%CB%90)*). The name is borrowed from a [character](https://reborn.fandom.com/wiki/Shitt_P!) name in *HITMAN REBORN!*.
 
 [![asciicast](https://asciinema.org/a/Pt8MvdHHmvzQPpitz8xWEA0jg.svg)](https://asciinema.org/a/Pt8MvdHHmvzQPpitz8xWEA0jg)
 
