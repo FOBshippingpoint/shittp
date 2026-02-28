@@ -165,8 +165,8 @@ Describe "detect_ssh_client_type()"
       Parameters
         'ssh'                  'openssh'
         'dbclient'             'dropbear'
-        'unsupported'          'unknown'
-        'non_existing_command' 'unknown'
+        'unsupported'          'unsupported'
+        'non_existing_command' 'non_existing_command'
       End
 
       It "print SSH client type"

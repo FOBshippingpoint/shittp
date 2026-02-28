@@ -35,8 +35,8 @@ chmod +x install.sh
     ```sh
     shittp john@other.machine
     john$ aloha  # output: hello
-    john$ vim    # alias equal to "vim -u $SHITTP_HOME/.vimrc"
-    john$ tmux   # alias equal to "tmux -L shittp -f $SHITTP_HOME/.tmux.conf"
+    john$ vim
+    john$ tmux
     ```
     Or Docker container:
     ```sh
@@ -49,7 +49,7 @@ chmod +x install.sh
 1.  **Pack:** create a tarball of your dotfiles and pipes to base64 string.
 2.  **Transport:** passing the base64 string and setup script as a SSH remote command.
 3.  **Unpack:** on the remote, decodes base64 string and extracts to temp directory.
-4.  **Init:** sources setup script and start an interactive shell.
+4.  **Init:** update HOME environment variable to point to previous extracted directory. Sources setup script and start an interactive shell.
 5.  **Cleanup:** remove temp directory once disconnect.
 
 The original idea comes from [kyrat](https://github.com/fsquillace/kyrat), which uses `gzip`/`gunzip` and `bash`. shittp uses tar and POSIX shell.
@@ -117,14 +117,13 @@ shittp --client dbclient john@example.com
 | `SHITTP_SSH_CLIENT` | Local | SSH client path (overridden by `--client`). | `ssh` |
 | `SHITTP_SHELL` | Local/Remote | Shell path to use on the remote. | Remote login shell |
 | `SHITTP_HOME` | Local/Remote | Directory to extract dotfiles tarball into. | Created temp directory |
-| `SHITTP` | Remote | Path to `shittp_init.sh`. Source this if `[shittp] Inited` does not appear. |  |
-| `SHITTP_INITED` | Remote | Set to `1` if shittp initialized successfully. |  |
+| `OLD_HOME` | Remote | Original home directory. (e.g., `/home/john`) | |
 
 ### Limitations
 
-Large cofig may fail to load due to the OS maximum argument length constraint (`ARG_MAX`). It is known that 100K file will trigger the error on Alpine Linux.
+Large config may fail to load due to the OS maximum argument length constraint (`ARG_MAX`). It is known that 100K file will trigger the error on Alpine Linux.
 
-Command like `tar czf - | ssh host tar xzf -` should work, however this requires 2-stage SSH connection which means user need to type passphrase twice.
+Command like `tar czf . -C /path/to/dotfiles | ssh host tar xzf -` should work, however this requires 2-stage SSH connection which means user need to type passphrase twice.
 
 ## Development
 

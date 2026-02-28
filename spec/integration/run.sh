@@ -29,6 +29,7 @@ build_image() {
 }
 
 report=''
+failed_tests=''
 run_spec() {
   check_ignore "$1" && return
   docker run --rm "$1" "$2"
@@ -37,6 +38,8 @@ run_spec() {
     report="$report o"
   else
     report="$report x"
+    failed_tests="$failed_tests
+$2"
     failed=1
   fi
 }
@@ -45,9 +48,11 @@ while IFS= read -r line; do
   build_image "$line"
 done <<EOF 
 shittp-test-base.Dockerfile
-shittp-test-dropbear.Dockerfile
 shittp-test-bash.Dockerfile
+shittp-test-dropbear.Dockerfile
+shittp-test-tmux.Dockerfile
 shittp-test-vim.Dockerfile
+shittp-test-zsh.Dockerfile
 EOF
 
 
@@ -55,11 +60,13 @@ while IFS= read -r line; do
   run_spec $line
 done <<EOF 
 shittp-test-base:latest       spec/basic_spec.tcl
-shittp-test-base:latest       spec/remote_command_spec.tcl
 shittp-test-base:latest       spec/large_file_spec.tcl
+shittp-test-base:latest       spec/remote_command_spec.tcl
 shittp-test-bash:latest       spec/bash_spec.tcl
-shittp-test-vim:latest        spec/vim_spec.tcl
 shittp-test-dropbear:latest   spec/dropbear_spec.tcl
+shittp-test-tmux:latest       spec/tmux_spec.tcl
+shittp-test-vim:latest        spec/vim_spec.tcl
+shittp-test-zsh:latest        spec/zsh_spec.tcl
 EOF
 
 echo
@@ -78,9 +85,12 @@ echo
 
 if [ "${failed:-}" = 1 ]; then
   redln "Integration test failed :("
+  echo
+  redln "Failed tests:"
+  printf '  %s' "$failed_tests"
+  echo
   exit 1
 else
   greenln "Integration test passed :)"
   exit 0
 fi
-echo

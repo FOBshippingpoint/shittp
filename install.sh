@@ -85,9 +85,9 @@ USAGE
   exit 0
 }
 
-: ${SHITTP_SRC:=github}
-: ${SHITTP_BIN_DIR:="$HOME/.local/bin"}
-: ${SHITTP_CONFIG_DIR:="${XDG_CONFIG_HOME:-$HOME/.config}"}
+: "${SHITTP_SRC:=github}"
+: "${SHITTP_BIN_DIR:="$HOME/.local/bin"}"
+: "${SHITTP_CONFIG_DIR:="${XDG_CONFIG_HOME:-$HOME/.config}"}"
 YES=0
 
 while [ $# -gt 0 ]; do

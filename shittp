@@ -3,7 +3,7 @@
 
 set -eu
 
-SHITTP_VERSION='1.0.1'
+SHITTP_VERSION='2.0.0'
 
 : "${SHITTP_CONFIG_DIR:="${XDG_CONFIG_HOME:-$HOME/.config}/shittp"}"
 : "${SHITTP_SSH_CLIENT:=ssh}"
@@ -91,12 +91,9 @@ Environment Variables:
   SHITTP_SSH_CLIENT     SSH client path you want to use, will be override
                         by --client option
                         [default: ssh]
-  SHITTP                Path to shittp_init.sh. Source it if didn't see
-                        "[shittp] Inited" message after login
-                        @remote
   SHITTP_HOME           Which directory you want to extract dotfiles tarball to
                         @remote [default: a temp directory]
-  SHITTP_INITED         value is 1 if shittp initialized
+  OLD_HOME              Original home directory
                         @remote
 
 USAGE
@@ -189,7 +186,7 @@ detect_ssh_client_type() {
   case ${client_type:-$_client} in
     *ssh*)      printf 'openssh'  ;;
     *dbclient*) printf 'dropbear' ;;
-    *)          printf 'unknown'  ;;
+    *)          printf '%s' "${client_type:-$_client}"  ;;
   esac
 }
 
@@ -222,34 +219,27 @@ fi
 
 # shellcheck disable=SC2016
 printf '%s' '
-export SHITTP_INITED=1
 if [ -r "$SHITTP_HOME/_shittp_extra_command.sh" ]; then
   . "$SHITTP_HOME/_shittp_extra_command.sh"
 else
   echo "[shittp] Inited"
+  echo "[shittp] Your home directory (~) is now : $SHITTP_HOME"
+  echo "[shittp] Original home directory        : \$OLD_HOME"
 fi
-' >>"$tar_tmpdir/shittp/shittp_init.sh" # ensure exists
+export _SHITTP_INITED=1
+' >>"$tar_tmpdir/shittp/shittp_init.sh"
+
+# shellcheck disable=SC2016
+printf '%s' '[ ! "${_SHITTP_INITED:-}" ] && . "$SHITTP_HOME/shittp_init.sh"' >>"$tar_tmpdir/shittp/.zshenv"
 
 # Create the script with here-document so we don't need to figure out how to escape quotes
 setup_script=$(cat <<'SETUP'
 trap 'rm -r "$SHITTP_HOME"' EXIT
 
-export SHITTP="$SHITTP_HOME/shittp_init.sh"
-
-case ${SHITTP_SHELL:-$SHELL} in
-  *bash*)
-    echo '[ "${SHITTP_INITED:-}" ] || . "$SHITTP"' >>"$SHITTP_HOME/.bashrc"
-    bash --init-file "$SHITTP_HOME/.bashrc"
-  ;;
-  *zsh*)
-    echo '[ "${SHITTP_INITED:-}" ] || . "$SHITTP"' >>"$SHITTP_HOME/.zshrc"
-    export ZDOTDIR=$SHITTP_HOME
-    zsh -i
-  ;;
-  *) 
-    ENV=$SHITTP "${SHELL:-/bin/sh}" -i
-  ;;
-esac
+export OLD_HOME=$HOME
+export HOME=$SHITTP_HOME
+export ZENV
+ENV="$SHITTP_HOME/shittp_init.sh" "${SHITTP_SHELL:-${SHELL:-/bin/sh}}" -i
 SETUP
 )
 

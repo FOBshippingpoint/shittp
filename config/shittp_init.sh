@@ -1,34 +1,27 @@
 #===================[ ~/.config/shittp/shittp_init.sh ]===================
-
-# Feel free to edit this file.
-# You can check the original file at: https://github.com/FOBshippingpoint/shittp/blob/main/config/shittp_init.sh
-
-tmux_conf="$SHITTP_HOME/.tmux.conf"
-vimrc="$SHITTP_HOME/.vimrc"
-inputrc="$SHITTP_HOME/.inputrc"
-profile="$SHITTP_HOME/.profile"
-overwrite_aliases=0
-
-[ -r "$profile" ] && . "$profile"
-
-is_alias_exists() {
-  alias "$1" >/dev/null 2>&1
+#
+# This file will run after your shell start.
+# The snippet below make sure that ~/.profile script get sourced.
+#
+#===================[ EDIT WITH CAUTION ]=================================
+dot_coalesce() {
+  while [ $# -gt 0 ]; do
+    if [ -r "$1" ]; then
+      . "$1" && return
+    fi
+    shift
+  done
 }
 
-if [ -e "$tmux_conf" ]; then
-  if ! is_alias_exists tmux || [ "$overwrite_aliases" = 1 ]; then
-    alias tmux="tmux -L shittp -f $tmux_conf"
-  fi
-fi
+case ${SHELL:-} in
+  *bash*) dot_coalesce ~/.bash_profile ~/.bash_login ~/.profile ;;
+       *) 
+         if [ ! "${ZDOTDIR:-}" ]; then
+           dot_coalesce ~/.profile
+         fi
+       ;;
+esac
+#===================[ EDIT WITH CAUTION ]=================================
 
 
-if [ -e "$vimrc" ]; then
-  if ! is_alias_exists vim || [ "$overwrite_aliases" = 1 ]; then
-    alias vim="vim -u $vimrc"
-  fi
-fi
-
-
-if [ -e "$inputrc" ]; then
-  export INPUTRC=$inputrc
-fi
+# Feel free to add your commands below:

@@ -1,21 +1,18 @@
 #!/usr/bin/expect -f
 
-source [file join [file dirname [info script]] ssh_login.tcl]
+source [file join [file dirname [info script]] lib/ssh_login.tcl]
+
+exec /usr/sbin/sshd
+spawn /bin/sh
 
 ssh_login
 expect {
   -ex {[shittp] Inited} { }
-  timeout {
-    exit 1
-  }
+  timeout               abort
 }
 
 send "test_profile\r"
 expect {
-  ".profile ready" {
-    exit 0
-  }
-  timeout {
-    exit 1
-  }
+  ".profile ready" ok
+  timeout          abort
 }

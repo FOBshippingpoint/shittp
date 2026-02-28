@@ -5,11 +5,14 @@ source [file join [file dirname [info script]] lib/ssh_login.tcl]
 exec /usr/sbin/sshd
 spawn /bin/sh
 
-set keyfile {"$HOME/.ssh/id_dropbear"}
-
-# -y -y to bypass host key checking
-send "shittp --client dbclient -i $keyfile -y -y localhost\r"
+ssh_login
 expect {
-  -ex {[shittp] Inited} ok
+  -ex {[shittp] Inited} { }
   timeout               abort
+}
+
+send "aloha\r"
+expect {
+  "ALOHA~ de sho~" ok
+  timeout          abort
 }

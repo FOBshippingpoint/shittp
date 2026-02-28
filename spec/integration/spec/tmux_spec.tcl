@@ -6,8 +6,10 @@ exec /usr/sbin/sshd
 spawn /bin/sh
 
 ssh_login
-send "aloha\r"
+
+send "tmux new-session -d\r"
+send "test -f ~/tmuxbabe && echo ok\r"
 expect {
-  -ex {ALOHA~ de sho~} ok
-  timeout              abort
+  "ok"    ok
+  timeout abort
 }
